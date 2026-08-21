@@ -37,6 +37,7 @@
                     animation: {
                         'float': 'float 6s ease-in-out infinite',
                         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 8s linear infinite',
                     },
                     keyframes: {
                         float: {
@@ -87,7 +88,7 @@
         .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(0,242,254,0.3) 0%, transparent 70%); animation-delay: -5s; }
         .orb-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 70%); animation-delay: -2s; }
 
-        /* Enhanced Glass Panel - More Breathing Room */
+        /* Enhanced Glass Panel */
         .glass-panel {
             background: var(--color-cyber-panel);
             backdrop-filter: blur(20px);
@@ -95,17 +96,6 @@
             border: 1px solid var(--color-cyber-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Animated Striped Progress Bar */
-        .progress-stripe {
-            background-image: linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent);
-            background-size: 1.5rem 1.5rem;
-            animation: move-stripes 1.5s linear infinite;
-        }
-        @keyframes move-stripes {
-            from { background-position: 1.5rem 0; }
-            to { background-position: 0 0; }
         }
 
         /* Sleeker Inputs */
@@ -178,10 +168,21 @@
             }
         }
         
+        /* Progress Bar Animation */
+        .progress-bar-fill {
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         select option {
             background-color: #0f172a;
             color: white;
             padding: 12px;
+        }
+
+        /* Modal Backdrop blur */
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
     </style>
 </head>
@@ -195,6 +196,82 @@
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-28 lg:bottom-auto lg:top-8 left-1/2 lg:left-auto lg:right-8 -translate-x-1/2 lg:translate-x-0 z-[60] flex flex-col gap-4 w-full max-w-md px-5 lg:px-0 pointer-events-none"></div>
+
+    <!-- Custom Confirmation Modal (Replaces native confirm()) -->
+    <div id="confirm-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 modal-backdrop" onclick="closeModal()"></div>
+        <div class="glass-panel relative z-10 w-full max-w-sm rounded-[2rem] p-6 lg:p-8 transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+            <div class="w-16 h-16 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-rose-500/30">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-center text-white mb-2" id="modal-title">Konfirmasi</h3>
+            <p class="text-slate-300 text-center text-sm mb-6" id="modal-message">Apakah kamu yakin?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold hover:bg-white/10 transition-colors">Batal</button>
+                <button id="modal-confirm-btn" class="flex-1 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors shadow-[0_0_15px_rgba(244,63,94,0.4)]">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Input Modal (For Budget & Nominal) -->
+    <div id="input-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 modal-backdrop" onclick="closeInputModal()"></div>
+        <div class="glass-panel relative z-10 w-full max-w-sm rounded-[2rem] p-6 lg:p-8 transform scale-95 opacity-0 transition-all duration-300" id="input-modal-content">
+            <div class="w-16 h-16 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-blue-500/30" id="input-modal-icon">
+                <i class="fas fa-edit"></i>
+            </div>
+            <h3 class="text-xl font-bold text-center text-white mb-2" id="input-modal-title">Input Data</h3>
+            <p class="text-slate-400 text-center text-sm mb-6" id="input-modal-message">Masukkan nominal yang diinginkan</p>
+            
+            <div class="relative mb-6">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-bold">Rp</div>
+                <input type="number" id="modal-input-value" class="w-full pl-12 pr-4 py-4 rounded-xl glass-input text-lg font-bold outline-none" placeholder="0">
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeInputModal()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold hover:bg-white/10 transition-colors">Batal</button>
+                <button id="input-modal-save-btn" class="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors shadow-[0_0_15px_rgba(59,130,246,0.4)]">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Creation Modal -->
+    <div id="goal-modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 modal-backdrop" onclick="closeGoalModal()"></div>
+        <div class="glass-panel relative z-10 w-full max-w-md rounded-[2rem] p-6 lg:p-8 transform scale-95 opacity-0 transition-all duration-300" id="goal-modal-content">
+            <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2"><i class="fas fa-bullseye text-pink-500"></i> Buat Target Impian Baru</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1 mb-2">Nama Impian (Maks 20 Karakter)</label>
+                    <input type="text" id="goal-input-name" maxlength="20" class="w-full px-4 py-4 rounded-xl glass-input text-base font-medium outline-none" placeholder="Cth: Beli iPhone 15, Liburan...">
+                </div>
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1 mb-2">Target Dana (Rp)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-bold">Rp</div>
+                        <input type="number" id="goal-input-target" class="w-full pl-12 pr-4 py-4 rounded-xl glass-input text-base font-bold outline-none" placeholder="10000000">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1 mb-2">Pilih Icon</label>
+                    <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="📱" checked class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">📱</div></label>
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="✈️" class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">✈️</div></label>
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="💻" class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">💻</div></label>
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="🚗" class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">🚗</div></label>
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="🏠" class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">🏠</div></label>
+                        <label class="cursor-pointer snap-start"><input type="radio" name="goal-icon" value="🎮" class="peer sr-only"><div class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 peer-checked:bg-pink-500/20 peer-checked:border-pink-500 text-2xl transition-all">🎮</div></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeGoalModal()" class="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold hover:bg-white/10 transition-colors">Batal</button>
+                <button onclick="saveNewGoal()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold transition-colors shadow-[0_0_15px_rgba(236,72,153,0.4)]">Buat Target</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ================= SIDEBAR (DESKTOP) ================= -->
     <aside class="hidden lg:flex flex-col w-[300px] h-full glass-panel border-r border-white/5 relative z-20 flex-shrink-0 shadow-[20px_0_40px_rgba(0,0,0,0.5)]">
@@ -229,12 +306,8 @@
                 <i class="fas fa-chart-pie w-6 text-center text-lg group-hover:text-cyan-400 transition-colors"></i> Analisis
             </a>
             
-            <a href="#section-subs" class="flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-semibold text-sm group hover:translate-x-1">
-                <i class="fas fa-calendar-check w-6 text-center text-lg group-hover:text-indigo-400 transition-colors"></i> Tagihan Rutin
-            </a>
-            
             <a href="#section-history" class="flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-semibold text-sm group hover:translate-x-1">
-                <i class="fas fa-list-ul w-6 text-center text-lg group-hover:text-emerald-400 transition-colors"></i> History
+                <i class="fas fa-list-ul w-6 text-center text-lg group-hover:text-emerald-400 transition-colors"></i> History Transaksi
             </a>
         </nav>
 
@@ -244,79 +317,130 @@
                 <button onclick="exportToCSV()" class="bg-slate-800/50 hover:bg-slate-700/80 text-slate-300 py-3.5 rounded-xl text-xs font-bold transition-all border border-slate-600/30 flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:-translate-y-0.5">
                     <i class="fas fa-download"></i> Export
                 </button>
-                <button onclick="clearAllData()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 py-3.5 rounded-xl text-xs font-bold transition-all border border-rose-500/20 flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)] hover:-translate-y-0.5">
+                <button onclick="requestClearData()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 py-3.5 rounded-xl text-xs font-bold transition-all border border-rose-500/20 flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)] hover:-translate-y-0.5">
                     <i class="fas fa-trash-alt"></i> Reset
                 </button>
             </div>
             
-            <div class="flex justify-center items-center gap-5 mt-4 pt-2 text-slate-500 text-lg">
-                <a href="#" class="hover:text-pink-400 hover:scale-110 transition-all"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="hover:text-white hover:scale-110 transition-all"><i class="fab fa-tiktok"></i></a>
-                <a href="#" class="hover:text-blue-400 hover:scale-110 transition-all"><i class="fab fa-twitter"></i></a>
+            <a href="https://saweria.co" target="_blank" rel="noopener noreferrer" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:-translate-y-0.5">
+                <i class="fas fa-coffee"></i> Dukung Kreator
+            </a>
+
+            <div class="text-center px-3 py-3 bg-white/5 rounded-xl border border-white/10">
+                <p class="text-[10px] text-slate-300 italic font-medium">"Hemat pangkal kaya, boros pangkal pinjol."</p>
             </div>
         </div>
     </aside>
 
     <!-- ================= MAIN CONTENT AREA ================= -->
     <main id="main-content" class="flex-1 h-full overflow-y-auto relative custom-scrollbar">
-        <!-- Generous max-width and padding for breathing room -->
         <div class="p-5 md:p-8 lg:p-10 max-w-[1800px] mx-auto space-y-8 lg:space-y-12 pb-32 lg:pb-16" id="top-dashboard">
             
             <!-- Mobile Header -->
-            <header class="lg:hidden flex justify-between items-center glass-panel p-6 rounded-[2rem] relative overflow-hidden mb-8 shadow-xl">
+            <header class="lg:hidden flex flex-col gap-4 glass-panel p-5 rounded-[2rem] relative overflow-hidden shadow-xl">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-purple-600/30 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center shadow-lg glow-pink">
-                        <i class="fas fa-wallet text-white text-xl"></i>
+                <div class="flex justify-between items-center z-10 relative">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center shadow-lg glow-pink">
+                            <i class="fas fa-wallet text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 glow-text tracking-tight leading-none">
+                                UANGKU
+                            </h1>
+                            <p class="text-[10px] text-slate-400 font-medium mt-1">Smart Tracker</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 glow-text tracking-tight leading-none">
-                            UANGKU
-                        </h1>
-                        <p class="text-[10px] text-slate-400 font-medium mt-1">Smart Tracker</p>
+                    <div class="flex gap-2 relative z-10">
+                        <button onclick="requestClearData()" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 relative hover:bg-rose-500/20 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
-                </div>
-                <div class="flex gap-2 relative z-10">
-                    <button onclick="exportToCSV()" class="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-600/50 flex items-center justify-center text-slate-300 active:scale-95 transition-transform">
-                        <i class="fas fa-download"></i>
-                    </button>
                 </div>
             </header>
 
-            <!-- Top Stats Cards - Wider & Taller -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-8">
+            <!-- Gen-Z Filter & Controls -->
+            <div class="flex items-center justify-between z-20 relative bg-slate-900/40 p-2 md:p-3 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg ring-1 ring-white/5">
+                <div class="flex overflow-x-auto custom-scrollbar gap-2 md:gap-3 w-full snap-x">
+                    <button onclick="setFilter('this_month')" id="btn-filter-this_month" class="filter-btn snap-start px-5 py-2.5 md:py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs md:text-sm whitespace-nowrap shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all transform active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-calendar-day"></i> Bulan Ini ✨
+                    </button>
+                    <button onclick="setFilter('last_month')" id="btn-filter-last_month" class="filter-btn snap-start px-5 py-2.5 md:py-3 rounded-2xl bg-white/5 text-slate-400 border border-white/5 font-bold text-xs md:text-sm whitespace-nowrap hover:bg-white/10 hover:text-white transition-all transform active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-history"></i> Bulan Lalu ⏪
+                    </button>
+                    <button onclick="setFilter('all_time')" id="btn-filter-all_time" class="filter-btn snap-start px-5 py-2.5 md:py-3 rounded-2xl bg-white/5 text-slate-400 border border-white/5 font-bold text-xs md:text-sm whitespace-nowrap hover:bg-white/10 hover:text-white transition-all transform active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-infinity"></i> Semua Waktu 🌍
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top Stats Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8">
                 <!-- Saldo Utama -->
-                <div class="glass-panel p-8 lg:p-10 rounded-[2rem] border-t-2 border-t-blue-500 md:col-span-1 relative overflow-hidden group hover-lift flex flex-col justify-center">
-                    <div class="absolute right-0 bottom-0 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-700 transform translate-x-4 translate-y-4">
-                        <i class="fas fa-coins text-[10rem] text-blue-400"></i>
+                <div class="lg:col-span-5 glass-panel p-6 lg:p-8 xl:p-10 rounded-[2.5rem] bg-gradient-to-br from-slate-900/90 to-slate-950/90 ring-1 ring-blue-500/20 hover:ring-blue-400/60 hover:shadow-[0_0_40px_rgba(59,130,246,0.25)] relative overflow-hidden group transition-all duration-500 flex flex-col justify-center min-w-0">
+                    <div class="absolute right-0 bottom-0 opacity-10 group-hover:scale-125 group-hover:opacity-20 group-hover:-rotate-12 transition-all duration-700 transform translate-x-4 translate-y-4 pointer-events-none">
+                        <i class="fas fa-wallet text-[12rem] text-blue-500 filter blur-sm"></i>
                     </div>
-                    <p class="text-sm font-bold text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                        <i class="fas fa-wallet text-blue-400 text-lg"></i> Sisa Saldo
-                    </p>
-                    <h2 id="saldo-utama" class="text-5xl lg:text-6xl font-extrabold text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">Rp 0</h2>
+                    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDIiLz4KPHBhdGggZD0iTTAgMEg4VjhIMHoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-30 z-0 pointer-events-none rounded-[2.5rem]"></div>
+                    
+                    <div class="flex justify-between items-center mb-4 relative z-10">
+                        <p class="text-xs md:text-sm font-bold text-blue-400 flex items-center gap-2 uppercase tracking-widest bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">
+                            <i class="fas fa-coins"></i> Total Aset
+                        </p>
+                        <!-- Aksi Cepat -->
+                        <div class="flex gap-2">
+                            <button onclick="toggleBalance()" id="btn-toggle-balance" class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer shadow-inner active:scale-95" title="Sembunyikan Saldo">
+                                <i class="fas fa-eye" id="icon-toggle-balance"></i>
+                            </button>
+                            <a href="#section-history" class="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer shadow-inner active:scale-95" title="Lihat History">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <h2 id="saldo-utama" class="text-3xl md:text-5xl lg:text-5xl xl:text-6xl font-black text-white tracking-tighter drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] truncate w-full transition-all duration-300 relative z-10 py-2">Rp 0</h2>
+                    
+                    <div class="mt-4 flex items-center gap-2 relative z-10 opacity-80 flex-wrap">
+                        <span id="status-badge" class="bg-blue-500/20 text-blue-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-blue-500/30 tracking-wider">STATUS AMAN 🛡️</span>
+                        
+                        <!-- NEW: Gamification Zero-Spend Streak -->
+                        <span id="streak-badge" class="bg-amber-500/20 text-amber-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-amber-500/30 tracking-wider flex items-center gap-1 hidden shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                            <i class="fas fa-fire"></i> <span id="streak-count">0</span> HARI TANPA BONCOS
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="grid grid-cols-2 md:grid-cols-1 gap-5 lg:gap-8 md:col-span-2 grid-rows-1 md:grid-rows-1 md:grid-flow-col">
+                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5 lg:gap-8">
                     <!-- Pemasukan -->
-                    <div class="glass-panel p-6 lg:p-8 rounded-[2rem] border-t-2 border-t-emerald-500 relative overflow-hidden group hover-lift flex flex-col justify-center">
-                         <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-700">
-                            <i class="fas fa-arrow-trend-up text-8xl text-emerald-400"></i>
+                    <div onclick="scrollToElement('section-form')" class="glass-panel p-6 lg:p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900/90 to-slate-950/90 ring-1 ring-emerald-500/20 hover:ring-emerald-400/60 hover:shadow-[0_0_40px_rgba(16,185,129,0.25)] relative overflow-hidden group transition-all duration-500 flex flex-col justify-center min-w-0 cursor-pointer active:scale-95">
+                         <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-125 group-hover:opacity-10 group-hover:-rotate-12 transition-all duration-700 pointer-events-none">
+                            <i class="fas fa-arrow-trend-up text-9xl text-emerald-400 filter blur-sm"></i>
                         </div>
-                        <p class="text-xs lg:text-sm font-bold text-slate-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                            <i class="fas fa-arrow-down text-emerald-400"></i> Pemasukan
-                        </p>
-                        <h2 id="total-masuk" class="text-3xl lg:text-4xl font-bold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">Rp 0</h2>
+                        <div class="flex justify-between items-start mb-3 relative z-10">
+                            <p class="text-xs md:text-sm font-bold text-emerald-400 flex items-center gap-2 uppercase tracking-widest bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                                <i class="fas fa-bolt"></i> Cuan Masuk
+                            </p>
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        </div>
+                        <h2 id="total-masuk" class="text-2xl md:text-3xl xl:text-4xl font-extrabold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.4)] truncate w-full transition-all duration-300 relative z-10 py-1">Rp 0</h2>
                     </div>
                     
                     <!-- Pengeluaran -->
-                    <div class="glass-panel p-6 lg:p-8 rounded-[2rem] border-t-2 border-t-rose-500 relative overflow-hidden group hover-lift flex flex-col justify-center">
-                         <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-700">
-                            <i class="fas fa-fire text-8xl text-rose-400"></i>
+                    <div onclick="scrollToElement('section-form')" class="glass-panel p-6 lg:p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900/90 to-slate-950/90 ring-1 ring-rose-500/20 hover:ring-rose-400/60 hover:shadow-[0_0_40px_rgba(244,63,94,0.25)] relative overflow-hidden group transition-all duration-500 flex flex-col justify-center min-w-0 cursor-pointer active:scale-95">
+                         <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-125 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-700 pointer-events-none">
+                            <i class="fas fa-fire text-9xl text-rose-400 filter blur-sm"></i>
                         </div>
-                        <p class="text-xs lg:text-sm font-bold text-slate-400 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                            <i class="fas fa-arrow-up text-rose-400"></i> Pengeluaran
-                        </p>
-                        <h2 id="total-keluar" class="text-3xl lg:text-4xl font-bold text-rose-400 drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]">Rp 0</h2>
+                        <div class="flex justify-between items-start mb-3 relative z-10">
+                            <p class="text-xs md:text-sm font-bold text-rose-400 flex items-center gap-2 uppercase tracking-widest bg-rose-500/10 px-3 py-1.5 rounded-full border border-rose-500/20">
+                                <i class="fas fa-skull"></i> Boncos Keluar
+                            </p>
+                            <div class="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 text-sm opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        </div>
+                        <h2 id="total-keluar" class="text-2xl md:text-3xl xl:text-4xl font-extrabold text-rose-400 drop-shadow-[0_0_15px_rgba(244,63,94,0.4)] truncate w-full transition-all duration-300 relative z-10 py-1">Rp 0</h2>
                     </div>
                 </div>
             </div>
@@ -329,7 +453,7 @@
                     </p>
                 </div>
                 <div class="flex overflow-x-auto gap-4 pb-4 custom-scrollbar snap-x snap-mandatory">
-                    <button onclick="quickAddExpense('Kopi / Cafe', 'Nongkrong/Hiburan', 35000)" class="snap-start flex-shrink-0 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-white px-6 py-4 rounded-[1.5rem] text-sm font-semibold transition-all flex items-center gap-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(168,85,247,0.4)]">
+                    <button onclick="quickAddExpense('Ngopi Santai', 'Makan & Minum', 35000)" class="snap-start flex-shrink-0 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-white px-6 py-4 rounded-[1.5rem] text-sm font-semibold transition-all flex items-center gap-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(168,85,247,0.4)]">
                         <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-xl">☕</div> 
                         <div class="text-left">
                             <div class="block">Ngopi</div>
@@ -357,7 +481,7 @@
                             <div class="text-xs text-orange-400 font-bold opacity-80">20k</div>
                         </div>
                     </button>
-                    <button onclick="quickAddExpense('Topup / Sub', 'Nongkrong/Hiburan', 50000)" class="snap-start flex-shrink-0 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-500/50 text-white px-6 py-4 rounded-[1.5rem] text-sm font-semibold transition-all flex items-center gap-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(99,102,241,0.4)]">
+                    <button onclick="quickAddExpense('Topup / Langganan', 'Hiburan', 50000)" class="snap-start flex-shrink-0 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-500/50 text-white px-6 py-4 rounded-[1.5rem] text-sm font-semibold transition-all flex items-center gap-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(99,102,241,0.4)]">
                         <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-xl">🎮</div> 
                         <div class="text-left">
                             <div class="block">Game/Sub</div>
@@ -399,13 +523,14 @@
                                 </label>
                             </div>
 
+                            <!-- Kategori Dropdown -->
                             <div class="space-y-2">
                                 <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Kategori</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 text-lg">
                                         <i class="fas fa-layer-group"></i>
                                     </div>
-                                    <select id="input-kategori" required class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base lg:text-lg appearance-none font-semibold cursor-pointer">
+                                    <select id="input-kategori" required class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base lg:text-lg appearance-none font-semibold cursor-pointer outline-none">
                                         <!-- Populated by JS -->
                                     </select>
                                     <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-slate-400">
@@ -413,219 +538,143 @@
                                     </div>
                                 </div>
                             </div>
-
+                            
+                            <!-- Nominal Input -->
                             <div class="space-y-2">
-                                <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Nominal</label>
+                                <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Nominal (Rp)</label>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 font-bold text-lg">
+                                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 font-bold">
                                         Rp
                                     </div>
-                                    <input type="number" id="input-nominal" placeholder="0" required min="1" class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-lg lg:text-xl font-extrabold tracking-wider">
+                                    <input type="number" id="input-nominal" required placeholder="0" min="1" class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base lg:text-lg font-bold outline-none no-spinners">
                                 </div>
                             </div>
 
+                            <!-- Catatan Input -->
                             <div class="space-y-2">
-                                <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Keterangan / Notes</label>
+                                <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Catatan</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 text-lg">
-                                        <i class="fas fa-comment-dots"></i>
+                                        <i class="fas fa-sticky-note"></i>
                                     </div>
-                                    <input type="text" id="input-keterangan" placeholder="Contoh: Kopi janji jiwa..." required class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base font-medium">
+                                    <input type="text" id="input-catatan" required placeholder="Nongkrong di cafe..." class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base font-medium outline-none">
                                 </div>
                             </div>
 
-                            <button type="submit" class="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-extrabold py-5 lg:py-6 rounded-2xl text-base lg:text-lg transition-all duration-300 shadow-[0_10px_30px_rgba(236,72,153,0.4)] flex items-center justify-center gap-3 group uppercase tracking-widest hover:-translate-y-1">
-                                <span>Simpan Transaksi</span>
-                                <i class="fas fa-paper-plane group-hover:translate-x-2 group-hover:-translate-y-1 transition-transform duration-300"></i>
+                            <!-- Tanggal Input -->
+                            <div class="space-y-2">
+                                <label class="text-xs uppercase tracking-[0.15em] text-slate-400 font-bold block ml-1">Tanggal</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 text-lg">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <input type="date" id="input-tanggal" required class="w-full pl-14 pr-5 py-4 lg:py-5 rounded-2xl glass-input text-base font-medium outline-none cursor-pointer">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-5 mt-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-extrabold text-lg shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+                                <i class="fas fa-paper-plane"></i> Simpan Transaksi
                             </button>
                         </form>
                     </div>
-
-                    <!-- Widget: Target Tabungan -->
-                    <div class="glass-panel p-8 rounded-[2rem] border border-cyan-500/30 shadow-[0_0_30px_rgba(34,211,238,0.1)] group">
-                        <div class="flex justify-between items-center mb-6 relative z-10">
-                            <h2 class="text-base font-bold text-cyan-400 flex items-center gap-3 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)] uppercase tracking-widest">
-                                <div class="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center"><i class="fas fa-crosshairs"></i></div>
-                                Target Goals
-                            </h2>
-                            <button onclick="editTarget()" class="text-xs bg-cyan-900/50 hover:bg-cyan-800/80 text-cyan-300 px-4 py-2 rounded-xl border border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all uppercase tracking-widest font-bold flex gap-2 items-center hover:scale-105">
-                                <i class="fas fa-sliders-h"></i> Edit
-                            </button>
-                        </div>
-
-                        <div class="bg-slate-950/80 p-6 rounded-2xl border border-cyan-500/20 relative overflow-hidden shadow-inner">
-                            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.1)_0%,transparent_70%)] pointer-events-none"></div>
-                            
-                            <div class="flex justify-between items-end mb-6 relative z-10">
-                                <div>
-                                    <p id="target-name" class="font-extrabold text-white text-base lg:text-lg tracking-wide mb-1">Beli Gadget Impian 📱</p>
-                                    <p class="text-xs text-cyan-500 uppercase tracking-widest font-black">TERKUMPUL: <span id="target-saved" class="text-cyan-300">Rp 0</span></p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">TARGET: <span id="target-total" class="text-slate-300">Rp 1.000.000</span></p>
-                                    <p id="target-percent" class="font-black text-cyan-400 text-3xl lg:text-4xl drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">0%</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Thicker Progress Bar -->
-                            <div class="w-full bg-slate-900 rounded-full h-5 mb-6 relative z-10 overflow-hidden border border-cyan-900/50 p-1">
-                                <div id="target-bar" class="bg-cyan-400 h-full rounded-full transition-all duration-1000 w-0 progress-stripe shadow-[0_0_15px_rgba(34,211,238,0.8)] relative">
-                                    <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/50 blur-sm rounded-r-full"></div>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-4 relative z-10">
-                                <button onclick="addSavings(50000)" class="flex-1 bg-cyan-950/60 hover:bg-cyan-900 text-cyan-400 text-sm font-extrabold py-3.5 rounded-xl border border-cyan-500/40 transition-all uppercase tracking-widest hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] hover:-translate-y-1">+ 50k</button>
-                                <button onclick="addSavings(100000)" class="flex-1 bg-blue-950/60 hover:bg-blue-900 text-blue-400 text-sm font-extrabold py-3.5 rounded-xl border border-blue-500/40 transition-all uppercase tracking-widest hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:-translate-y-1">+ 100k</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Widget: Batas Boncos Bulanan -->
-                    <div class="glass-panel p-8 rounded-[2rem] border border-slate-600/30 shadow-[0_0_30px_rgba(100,116,139,0.1)]">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-base font-bold text-slate-300 flex items-center gap-3 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,255,255,0.2)]">
-                                <div class="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center"><i class="fas fa-shield-virus"></i></div>
-                                Limit Bulanan
-                            </h2>
-                            <button onclick="editLimit()" class="text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl border border-slate-500/50 hover:shadow-[0_0_15px_rgba(148,163,184,0.3)] transition-all uppercase tracking-widest font-bold flex gap-2 items-center hover:scale-105">
-                                <i class="fas fa-terminal"></i> Set Limit
-                            </button>
-                        </div>
-
-                        <div class="bg-slate-950/80 p-6 rounded-2xl border border-slate-700/50 relative overflow-hidden shadow-inner">
-                            <div class="flex justify-between items-center mb-4 relative z-10">
-                                <span class="text-xs text-slate-500 font-bold uppercase tracking-widest">Status Sistem:</span>
-                                <span id="limit-status-badge" class="text-xs font-black tracking-widest px-3 py-1.5 rounded-lg border border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] bg-emerald-900/30 uppercase">AMAN</span>
-                            </div>
-                            
-                            <div class="w-full bg-slate-900 rounded-full h-5 mb-5 overflow-hidden border border-slate-800 p-1 relative z-10">
-                                <div id="limit-bar" class="bg-emerald-400 h-full rounded-full transition-all duration-500 w-0 progress-stripe shadow-[0_0_15px_rgba(16,185,129,0.8)] relative">
-                                    <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/50 blur-sm rounded-r-full"></div>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between text-xs lg:text-sm relative z-10 font-bold uppercase tracking-wider">
-                                <span class="text-slate-500">Dipakai: <span id="limit-used" class="text-rose-400 font-extrabold drop-shadow-[0_0_5px_rgba(244,63,94,0.5)] ml-1">Rp 0</span></span>
-                                <span class="text-slate-500">Limit: <span id="limit-total" class="text-slate-200 font-extrabold ml-1">Rp 2.000.000</span></span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- ================= RIGHT COLUMN ================= -->
-                <div class="xl:col-span-8 space-y-8 lg:space-y-12">
                     
-                    <!-- Top Boncos Breakdown Widget -->
-                    <div id="section-analytics" class="glass-panel p-8 lg:p-10 rounded-[2.5rem] border border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.15)] scroll-mt-10">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-lg lg:text-xl font-extrabold text-purple-400 flex items-center gap-3 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)] uppercase tracking-widest">
-                                <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center"><i class="fas fa-chart-pie text-white"></i></div>
-                                Analisis Pengeluaran
+                    <!-- NEW: Batas Boncos (Budgeting Card) -->
+                    <div id="section-budget" class="glass-panel p-8 lg:p-10 rounded-[2.5rem] relative overflow-hidden shadow-xl border border-rose-500/20 hover:border-rose-500/40 transition-colors group">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                        <div class="flex justify-between items-start mb-6 relative z-10">
+                            <div>
+                                <h2 class="text-lg lg:text-xl font-bold text-white flex items-center gap-2">
+                                    <i class="fas fa-shield-alt text-rose-400"></i> Batas Boncos Bulanan
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-1">Kontrol pengeluaranmu bulan ini.</p>
+                            </div>
+                            <button onclick="openBudgetModal()" class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500/20 transition-all cursor-pointer shadow-inner">
+                                <i class="fas fa-cog text-xs"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="relative z-10" id="budget-content">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ================= RIGHT COLUMN ================= -->
+                <div class="xl:col-span-8 space-y-8 lg:space-y-10">
+                    
+                    <!-- NEW: AI Insights Widget -->
+                    <div id="section-ai" class="glass-panel p-6 rounded-[2rem] relative overflow-hidden shadow-xl border border-purple-500/30 bg-gradient-to-r from-slate-900/90 to-purple-900/30 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] transition-all">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="flex items-start md:items-center gap-4 relative z-10 flex-col md:flex-row">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/30 shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                                <i class="fas fa-robot text-xl animate-pulse"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                                    UANGKU AI <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] px-2 py-0.5 rounded-md font-extrabold tracking-wider">BETA</span>
+                                </h3>
+                                <p id="ai-insight-text" class="text-xs md:text-sm text-slate-300 font-medium leading-relaxed">
+                                    "Halo! Aku lagi menganalisis pola pengeluaranmu bulan ini. Catat transaksi dulu yuk biar aku bisa ngasih saran."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Section -->
+                    <div id="section-analytics" class="glass-panel p-6 lg:p-10 rounded-[2.5rem] relative overflow-hidden scroll-mt-10 shadow-2xl">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-bl-full pointer-events-none"></div>
+                        
+                        <div class="flex justify-between items-center mb-8 relative z-10">
+                            <h2 class="text-xl lg:text-2xl font-extrabold text-white flex items-center gap-3">
+                                <div class="p-3 rounded-xl bg-cyan-500/20 text-cyan-400"><i class="fas fa-chart-pie"></i></div>
+                                Analisis Boncos
                             </h2>
-                            <span class="text-[10px] lg:text-xs font-black tracking-widest px-4 py-2 rounded-xl border border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] bg-purple-900/30 uppercase hidden sm:block">
-                                Visualisasi AI
-                            </span>
                         </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                            <!-- Chart Area -->
-                            <div class="relative h-64 lg:h-80 w-full flex justify-center items-center p-4">
-                                <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(168,85,247,0.1)_0%,transparent_60%)] pointer-events-none"></div>
-                                <canvas id="expenseChart" class="relative z-10"></canvas>
-                                <!-- Empty state fallback -->
-                                <div id="chart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 hidden z-20">
-                                    <div class="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-4">
-                                        <i class="fas fa-ghost text-4xl opacity-50"></i>
-                                    </div>
-                                    <span class="text-sm font-semibold tracking-wider">Belum ada data pengeluaran</span>
-                                </div>
-                            </div>
-                            
-                            <!-- List Area -->
-                            <div id="category-breakdown-list" class="space-y-6 max-h-64 lg:max-h-80 overflow-y-auto pr-4 custom-scrollbar">
-                                <!-- Populated dynamically -->
+                        
+                        <div class="w-full h-[300px] lg:h-[400px] flex items-center justify-center relative z-10">
+                            <!-- Canvas Chart.js -->
+                            <canvas id="expenseChart"></canvas>
+                            <div id="empty-chart-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 hidden">
+                                <i class="fas fa-ghost text-5xl mb-4 opacity-30"></i>
+                                <p class="font-bold">Belum ada data boncos nih.</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Subscriptions & Debts Grid -->
-                    <div id="section-subs" class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 scroll-mt-10">
+                    <!-- NEW: Target Impian (Savings Goals) -->
+                    <div id="section-goals" class="glass-panel p-6 lg:p-10 rounded-[2.5rem] relative overflow-hidden shadow-2xl">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-gradient-to-tl from-pink-500/10 to-transparent rounded-tl-full pointer-events-none"></div>
                         
-                        <!-- Subscriptions Tracker Widget -->
-                        <div class="glass-panel p-8 rounded-[2rem] border-t-2 border-t-indigo-500 flex flex-col h-full lg:min-h-[420px] hover-lift">
-                            <div class="flex justify-between items-center mb-8">
-                                <h2 class="text-base lg:text-lg font-bold text-slate-200 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center"><i class="fas fa-calendar-check text-indigo-400"></i></div>
-                                    Tagihan Rutin
-                                </h2>
-                                <button onclick="openSubModal()" class="text-xs bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 px-4 py-2 rounded-xl transition-all border border-indigo-500/30 font-bold flex items-center gap-2 hover:scale-105">
-                                    <i class="fas fa-plus"></i> Tambah
-                                </button>
-                            </div>
-
-                            <div id="subscriptions-list" class="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                                <!-- Populated dynamically -->
-                            </div>
-
-                            <div class="mt-6 p-5 bg-slate-950/80 rounded-2xl border border-white/5 flex justify-between items-center shadow-inner">
-                                <span class="text-xs lg:text-sm text-slate-400 font-bold uppercase tracking-widest">Total per Bulan:</span>
-                                <span id="sub-total-text" class="font-black text-indigo-400 text-lg lg:text-xl drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]">Rp 0</span>
-                            </div>
+                        <div class="flex justify-between items-center mb-6 relative z-10">
+                            <h2 class="text-xl lg:text-2xl font-extrabold text-white flex items-center gap-3">
+                                <div class="p-3 rounded-xl bg-pink-500/20 text-pink-400"><i class="fas fa-bullseye"></i></div>
+                                Target Impian
+                            </h2>
+                            <button onclick="openGoalModal()" class="px-4 py-2 rounded-xl bg-pink-500/20 border border-pink-500/30 text-pink-300 font-bold text-xs hover:bg-pink-500 hover:text-white transition-all shadow-[0_0_15px_rgba(236,72,153,0.2)] flex items-center gap-2">
+                                <i class="fas fa-plus"></i> Tambah
+                            </button>
                         </div>
-
-                        <!-- Debt Tracker Widget -->
-                        <div class="glass-panel p-8 rounded-[2rem] border-t-2 border-t-rose-500 flex flex-col h-full lg:min-h-[420px] hover-lift">
-                            <div class="flex justify-between items-center mb-8">
-                                <h2 class="text-base lg:text-lg font-bold text-slate-200 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center"><i class="fas fa-handshake text-rose-400"></i></div>
-                                    Hutang / Piutang
-                                </h2>
-                                <button onclick="openDebtModal()" class="text-xs bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 px-4 py-2 rounded-xl transition-all border border-rose-500/30 font-bold flex items-center gap-2 hover:scale-105">
-                                    <i class="fas fa-plus"></i> Catat
-                                </button>
-                            </div>
-
-                            <div id="debt-list" class="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                                <!-- Populated dynamically -->
-                            </div>
+                        
+                        <div id="goals-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                            <!-- Populated by JS -->
                         </div>
-
                     </div>
 
-                    <!-- History Transaksi List -->
-                    <div id="section-history" class="glass-panel p-8 lg:p-10 rounded-[2.5rem] scroll-mt-10 border border-white/5 shadow-2xl relative overflow-hidden">
-                        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                        
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 lg:mb-10 relative z-10">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
-                                    <i class="fas fa-list-ul text-cyan-400 text-xl"></i>
-                                </div>
-                                <div>
-                                    <h2 class="text-lg lg:text-xl font-extrabold text-white">History Transaksi</h2>
-                                    <span id="tx-count" class="text-xs font-bold text-cyan-400 mt-1 inline-block uppercase tracking-widest">0 Data Ditemukan</span>
-                                </div>
-                            </div>
-                            
-                            <div class="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-4">
-                                <!-- Search -->
-                                <div class="relative flex-1 sm:w-64">
-                                    <input type="text" id="search-input" placeholder="Cari transaksi..." class="w-full bg-slate-900/80 border border-white/10 rounded-2xl py-3.5 pl-12 pr-5 text-sm text-white focus:outline-none focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all">
-                                    <i class="fas fa-search absolute left-5 top-[14px] text-slate-500"></i>
-                                </div>
-                                <!-- Filter -->
-                                <div class="bg-slate-900/80 border border-white/10 rounded-2xl p-1.5 flex shadow-inner">
-                                    <button onclick="setFilter('all')" id="btn-filter-all" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-white/10 text-white shadow-sm">Semua</button>
-                                    <button onclick="setFilter('income')" id="btn-filter-income" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5">Masuk</button>
-                                    <button onclick="setFilter('expense')" id="btn-filter-expense" class="px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5">Keluar</button>
-                                </div>
-                            </div>
+                    <!-- History Section -->
+                    <div id="section-history" class="glass-panel p-6 lg:p-10 rounded-[2.5rem] relative overflow-hidden scroll-mt-10 shadow-2xl">
+                        <div class="flex justify-between items-center mb-8 relative z-10">
+                            <h2 class="text-xl lg:text-2xl font-extrabold text-white flex items-center gap-3">
+                                <div class="p-3 rounded-xl bg-emerald-500/20 text-emerald-400"><i class="fas fa-list-ul"></i></div>
+                                Histori Transaksi
+                            </h2>
+                            <button onclick="renderHistory()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+                                <i class="fas fa-sync-alt text-sm"></i>
+                            </button>
                         </div>
-
-                        <div id="tx-list" class="space-y-4 max-h-[800px] overflow-y-auto pr-4 custom-scrollbar relative z-10">
-                            <!-- Transaksi akan dimuat di sini -->
+                        
+                        <!-- List Container -->
+                        <div id="history-container" class="space-y-4 relative z-10 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
 
@@ -634,258 +683,126 @@
         </div>
     </main>
 
-    <!-- Mobile Bottom Navigation (HUD Style) - Made Taller and more padded -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-purple-500/30 rounded-t-[2.5rem] flex justify-around items-center px-6 py-4 shadow-[0_-15px_40px_rgba(168,85,247,0.15)] pb-safe backdrop-blur-2xl">
-        <a href="#top-dashboard" class="flex flex-col items-center gap-1.5 p-2 text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-transform active:scale-95">
-            <i class="fas fa-home text-xl"></i>
-            <span class="text-[9px] font-black uppercase tracking-widest">Home</span>
-        </a>
-        <a href="#section-analytics" class="flex flex-col items-center gap-1.5 p-2 text-slate-500 hover:text-white transition-all active:scale-95">
-            <i class="fas fa-chart-pie text-xl"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Analisis</span>
-        </a>
-        
-        <!-- FAB (Floating Action Button) - Made Larger -->
-        <div class="relative -top-8">
-            <a href="#section-form" class="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-[0_10px_25px_rgba(236,72,153,0.5)] border-4 border-[#030712] hover:scale-110 active:scale-95 transition-transform">
-                <i class="fas fa-plus text-2xl drop-shadow-md"></i>
+    <!-- Mobile Bottom Nav -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-white/10 z-[50] pb-safe">
+        <div class="flex justify-around items-center h-20 px-4">
+            <a href="#top-dashboard" class="flex flex-col items-center gap-1 text-slate-400 hover:text-purple-400 transition-colors w-16 group">
+                <div class="p-2 rounded-xl group-hover:bg-purple-500/20 transition-all"><i class="fas fa-home text-xl"></i></div>
+                <span class="text-[9px] font-bold tracking-wider">HOME</span>
+            </a>
+            <a href="#section-form" class="flex flex-col items-center gap-1 text-slate-400 hover:text-pink-400 transition-colors w-16 group">
+                <div class="p-2 rounded-xl group-hover:bg-pink-500/20 transition-all"><i class="fas fa-pen-to-square text-xl"></i></div>
+                <span class="text-[9px] font-bold tracking-wider">CATAT</span>
+            </a>
+            <a href="#section-analytics" class="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors w-16 group">
+                <div class="p-2 rounded-xl group-hover:bg-cyan-500/20 transition-all"><i class="fas fa-chart-pie text-xl"></i></div>
+                <span class="text-[9px] font-bold tracking-wider">CHART</span>
+            </a>
+            <a href="#section-history" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors w-16 group">
+                <div class="p-2 rounded-xl group-hover:bg-emerald-500/20 transition-all"><i class="fas fa-list-ul text-xl"></i></div>
+                <span class="text-[9px] font-bold tracking-wider">HISTORI</span>
             </a>
         </div>
-        
-        <a href="#section-subs" class="flex flex-col items-center gap-1.5 p-2 text-slate-500 hover:text-white transition-all active:scale-95">
-            <i class="fas fa-calendar-check text-xl"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Tagihan</span>
-        </a>
-        <a href="#section-history" class="flex flex-col items-center gap-1.5 p-2 text-slate-500 hover:text-white transition-all active:scale-95">
-            <i class="fas fa-list-ul text-xl"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">History</span>
-        </a>
     </nav>
 
-    <!-- === MODALS === -->
-
-    <!-- Modal Catat Langganan -->
-    <div id="sub-modal" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-5 opacity-0 transition-opacity duration-300">
-        <div class="glass-panel p-8 max-w-md w-full space-y-6 rounded-[2rem] border border-indigo-500/30 shadow-[0_0_50px_rgba(99,102,241,0.2)] transform scale-95 transition-all duration-300" id="sub-modal-content">
-            <h3 class="text-lg lg:text-xl font-extrabold text-white flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center"><i class="fas fa-calendar-check text-indigo-400"></i></div>
-                Tambah Tagihan
-            </h3>
-            <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1">Nama Layanan</label>
-                <input type="text" id="sub-title-input" placeholder="Cth: Spotify, Netflix, Kosan" class="w-full glass-input rounded-2xl p-4 text-base text-white focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1">Biaya per Bulan (Rp)</label>
-                <input type="number" id="sub-amount-input" placeholder="Cth: 55000" class="w-full glass-input rounded-2xl p-4 text-base font-bold text-white focus:outline-none focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-            </div>
-            <div class="flex gap-4 pt-4">
-                <button onclick="closeSubModal()" class="flex-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl text-sm transition-all border border-slate-600/50 hover:border-slate-500">Batal</button>
-                <button onclick="saveSubModal()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold py-4 rounded-xl text-sm transition-all shadow-[0_10px_20px_-10px_rgba(99,102,241,0.6)] hover:-translate-y-1">Simpan</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Catat Hutang / Piutang -->
-    <div id="debt-modal" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-5 opacity-0 transition-opacity duration-300">
-        <div class="glass-panel p-8 max-w-md w-full space-y-6 rounded-[2rem] border border-rose-500/30 shadow-[0_0_50px_rgba(244,63,94,0.2)] transform scale-95 transition-all duration-300" id="debt-modal-content">
-            <h3 class="text-lg lg:text-xl font-extrabold text-white flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center"><i class="fas fa-handshake text-rose-400"></i></div>
-                Hutang / Piutang
-            </h3>
-            
-            <div class="grid grid-cols-2 gap-3 p-2 bg-slate-900/80 rounded-2xl border border-white/10 shadow-inner">
-                <button type="button" id="btn-debt-type-owe" onclick="selectDebtType('owe')" class="py-3.5 rounded-xl text-sm font-bold transition-all bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]">
-                    Aku Ngutang
-                </button>
-                <button type="button" id="btn-debt-type-owed" onclick="selectDebtType('owed')" class="py-3.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5">
-                    Temen Ngutang
-                </button>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1">Nama Teman/Pihak</label>
-                <input type="text" id="debt-name-input" placeholder="Cth: Si Budi" class="w-full glass-input rounded-2xl p-4 text-base text-white focus:outline-none focus:border-rose-500 focus:shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs uppercase tracking-widest text-slate-400 font-bold block ml-1">Nominal (Rp)</label>
-                <input type="number" id="debt-amount-input" placeholder="Cth: 50000" class="w-full glass-input rounded-2xl p-4 text-base font-bold text-white focus:outline-none focus:border-rose-500 focus:shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-            </div>
-            <div class="flex gap-4 pt-4">
-                <button onclick="closeDebtModal()" class="flex-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl text-sm transition-all border border-slate-600/50 hover:border-slate-500">Batal</button>
-                <button onclick="saveDebtModal()" class="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-extrabold py-4 rounded-xl text-sm transition-all shadow-[0_10px_20px_-10px_rgba(244,63,94,0.6)] hover:-translate-y-1">Simpan</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- === JAVASCRIPT === -->
     <script>
-        // State Management - Using localStorage for persistence
-        let transactions = JSON.parse(localStorage.getItem('uangku_data_genz')) || [];
+        // === Data & Configuration ===
+        const STORAGE_KEY = 'uangku_transactions_v1';
+        const BUDGET_KEY = 'uangku_budget_v1';
+        const GOALS_KEY = 'uangku_goals_v1';
         
-        let savingsState = JSON.parse(localStorage.getItem('uangku_savings')) || {
-            name: 'Beli Gadget Impian 📱',
-            target: 5000000,
-            saved: 0
-        };
-
-        let limitState = JSON.parse(localStorage.getItem('uangku_limit')) || {
-            limit: 3000000
-        };
-
-        let subscriptions = JSON.parse(localStorage.getItem('uangku_subscriptions')) || [
-            { id: 'sub_1', title: 'Spotify Premium 🎵', amount: 55000, paid: false },
-            { id: 'sub_2', title: 'Netflix 🎬', amount: 186000, paid: true }
-        ];
+        let transactions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let budgetLimit = parseFloat(localStorage.getItem(BUDGET_KEY)) || 0;
+        let savingGoals = JSON.parse(localStorage.getItem(GOALS_KEY)) || [];
         
-        let debts = JSON.parse(localStorage.getItem('uangku_debts')) || [];
-        let currentDebtType = 'owe'; 
-        
-        let expenseChartInstance = null; 
-        let currentFilter = 'all';
-        let searchQuery = '';
+        let currentFilter = 'this_month'; // 'this_month', 'last_month', 'all_time'
+        let balanceHidden = false;
+        let expenseChartInstance = null;
 
-        const KATEGORI = {
+        const categories = {
             expense: [
-                { id: 'makan', label: 'Makan & Minum 🍱' },
-                { id: 'transport', label: 'Transportasi ⛽' },
-                { id: 'nongkrong', label: 'Nongkrong/Hiburan 🎬' },
-                { id: 'belanja', label: 'Belanja/Shopping 🛍️' },
-                { id: 'tagihan', label: 'Tagihan/Kost 📄' },
-                { id: 'edukasi', label: 'Edukasi/Buku 📚' },
-                { id: 'kesehatan', label: 'Kesehatan 💊' },
-                { id: 'lainnya', label: 'Lain-lain 🤷‍♂️' }
+                { id: 'Makan & Minum', icon: '🍔' },
+                { id: 'Transportasi', icon: '⛽' },
+                { id: 'Hiburan', icon: '🎮' },
+                { id: 'Belanja', icon: '🛍️' },
+                { id: 'Tagihan', icon: '📄' },
+                { id: 'Lainnya', icon: '📦' }
             ],
             income: [
-                { id: 'gaji', label: 'Gaji/Freelance 💼' },
-                { id: 'uangsaku', label: 'Uang Saku/Ortu 👨‍👩‍👦' },
-                { id: 'bonus', label: 'Bonus/THR 🎁' },
-                { id: 'investasi', label: 'Hasil Investasi 📈' },
-                { id: 'lainnya', label: 'Lain-lain 🤷‍♂️' }
+                { id: 'Gaji', icon: '💰' },
+                { id: 'Freelance', icon: '💻' },
+                { id: 'Pemberian', icon: '🎁' },
+                { id: 'Investasi', icon: '📈' },
+                { id: 'Lainnya', icon: '✨' }
             ]
         };
 
+        const chartColors = ['#f43f5e', '#a855f7', '#3b82f6', '#f97316', '#10b981', '#64748b'];
+
+        // === Initialization ===
         document.addEventListener('DOMContentLoaded', () => {
+            // Ensure Investasi category exists if not already present
+            if (!categories.expense.some(c => c.id === 'Investasi/Tabungan')) {
+                categories.expense.push({ id: 'Investasi/Tabungan', icon: '🏦' });
+            }
+
+            // Set today's date in form
+            document.getElementById('input-tanggal').valueAsDate = new Date();
+            
             updateKategoriForm();
-            setupSearch();
-            updateUI();
+            setFilter('this_month'); // Initialize dashboard with 'this_month' filter
         });
 
-        function updateKategoriForm() {
-            const tipe = document.querySelector('input[name="tipe"]:checked').value;
-            const select = document.getElementById('input-kategori');
-            select.innerHTML = '<option value="" disabled selected>Pilih Kategori...</option>';
-            
-            KATEGORI[tipe].forEach(cat => {
-                select.innerHTML += `<option value="${cat.label}">${cat.label}</option>`;
-            });
-        }
+        // === Helpers ===
+        const formatRupiah = (number) => {
+            if (balanceHidden) return 'Rp *******';
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(number);
+        };
 
-        function setupSearch() {
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                searchQuery = e.target.value.toLowerCase();
-                renderList();
-            });
-        }
+        const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
 
-        function showToast(message, type = 'success') {
+        const scrollToElement = (id) => {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        };
+
+        // Custom Toast Notification
+        const showToast = (message, type = 'success') => {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             
-            const isSuccess = type === 'success';
-            const bgColor = isSuccess ? 'bg-slate-900/95' : 'bg-rose-950/95';
-            const borderColor = isSuccess ? 'border-purple-500/50' : 'border-rose-500/50';
-            const icon = isSuccess ? '<div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-purple-400 text-lg"></i></div>' : '<div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center flex-shrink-0"><i class="fas fa-exclamation text-rose-400 text-lg"></i></div>';
-            const shadow = isSuccess ? 'shadow-[0_10px_40px_rgba(168,85,247,0.3)]' : 'shadow-[0_10px_40px_rgba(244,63,94,0.3)]';
-
-            toast.className = `${bgColor} border ${borderColor} text-white p-4 rounded-2xl flex items-center gap-4 toast-enter backdrop-blur-xl ${shadow}`;
+            let icon = type === 'success' ? '<i class="fas fa-check-circle text-emerald-400 text-xl"></i>' : '<i class="fas fa-info-circle text-blue-400 text-xl"></i>';
+            let border = type === 'success' ? 'border-emerald-500/30' : 'border-blue-500/30';
+            
+            toast.className = `glass-panel p-4 rounded-2xl border ${border} flex items-center gap-3 toast-enter shadow-2xl`;
             toast.innerHTML = `
                 ${icon}
-                <span class="text-sm lg:text-base font-bold tracking-wide">${message}</span>
+                <p class="text-sm font-bold text-white">${message}</p>
             `;
             
             container.appendChild(toast);
             
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = window.innerWidth >= 1024 ? 'translateX(30px) scale(0.9)' : 'translateY(30px)';
-                toast.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                setTimeout(() => toast.remove(), 400);
-            }, 3500);
-        }
-
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(number);
-        }
-        
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function updateUI() {
-            const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-            const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-            const balance = income - expense;
-
-            // Animate Numbers
-            animateValue("saldo-utama", parseInt(document.getElementById('saldo-utama').innerText.replace(/[^0-9-]/g, '')) || 0, balance, 500);
-            animateValue("total-masuk", parseInt(document.getElementById('total-masuk').innerText.replace(/[^0-9]/g, '')) || 0, income, 500);
-            animateValue("total-keluar", parseInt(document.getElementById('total-keluar').innerText.replace(/[^0-9]/g, '')) || 0, expense, 500);
-
-            const saldoEl = document.getElementById('saldo-utama');
-            if (balance < 0) {
-                saldoEl.classList.remove('text-white', 'drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]');
-                saldoEl.classList.add('text-rose-400', 'drop-shadow-[0_0_15px_rgba(244,63,94,0.4)]');
-            } else {
-                saldoEl.classList.add('text-white', 'drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]');
-                saldoEl.classList.remove('text-rose-400', 'drop-shadow-[0_0_15px_rgba(244,63,94,0.4)]');
-            }
-
-            renderList();
-            renderWidgets();
-            renderCategoryBreakdown();
-            renderSubscriptions();
-            renderDebts();
-            
-            saveData();
-        }
-
-        function animateValue(id, start, end, duration) {
-            if (start === end) {
-                document.getElementById(id).innerText = formatRupiah(end);
-                return;
-            }
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const current = Math.floor(progress * (end - start) + start);
-                document.getElementById(id).innerText = formatRupiah(current);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    document.getElementById(id).innerText = formatRupiah(end);
+                toast.style.animation = 'slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+                if(window.innerWidth >= 1024) {
+                    toast.style.animation = 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
                 }
-            };
-            window.requestAnimationFrame(step);
-        }
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        };
 
-        function saveData() {
-            localStorage.setItem('uangku_data_genz', JSON.stringify(transactions));
-            localStorage.setItem('uangku_savings', JSON.stringify(savingsState));
-            localStorage.setItem('uangku_limit', JSON.stringify(limitState));
-            localStorage.setItem('uangku_subscriptions', JSON.stringify(subscriptions));
-            localStorage.setItem('uangku_debts', JSON.stringify(debts));
+        // === Core Logic ===
+        
+        function updateKategoriForm() {
+            const tipe = document.querySelector('input[name="tipe"]:checked').value;
+            const selectKategori = document.getElementById('input-kategori');
+            selectKategori.innerHTML = '';
+            
+            categories[tipe].forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.text = `${cat.icon} ${cat.id}`;
+                selectKategori.appendChild(option);
+            });
         }
 
         function handleFormSubmit(e) {
@@ -893,534 +810,760 @@
             
             const tipe = document.querySelector('input[name="tipe"]:checked').value;
             const kategori = document.getElementById('input-kategori').value;
-            const nominal = parseFloat(document.getElementById('input-nominal').value);
-            const keterangan = document.getElementById('input-keterangan').value.trim();
+            const nominal = parseInt(document.getElementById('input-nominal').value);
+            const catatan = document.getElementById('input-catatan').value;
+            const tanggal = document.getElementById('input-tanggal').value;
 
-            if (!kategori) {
-                showToast('Pilih kategori dulu bro!', 'error');
+            if (!nominal || isNaN(nominal) || nominal <= 0) {
+                showToast('Nominal tidak valid!', 'error');
                 return;
             }
 
-            const newTx = {
-                id: Date.now().toString(),
-                type: tipe,
-                category: kategori,
-                amount: nominal,
-                desc: keterangan,
-                date: new Date().toISOString()
+            const transaction = {
+                id: generateId(),
+                tipe,
+                kategori,
+                nominal,
+                catatan,
+                tanggal,
+                timestamp: new Date().getTime()
             };
 
-            transactions.unshift(newTx); 
+            transactions.push(transaction);
+            saveData();
             
-            document.getElementById('form-transaksi').reset();
-            updateKategoriForm();
+            // Reset Form (keep date and type)
+            document.getElementById('input-nominal').value = '';
+            document.getElementById('input-catatan').value = '';
             
-            showToast('Mantap! Transaksi dicatat 💸');
-            updateUI();
+            showToast('Transaksi berhasil dicatat!');
+            updateDashboard();
         }
 
-        function quickAddExpense(desc, categoryStr, amount) {
-            const newTx = {
-                id: Date.now().toString(),
-                type: 'expense',
-                category: categoryStr,
-                amount: amount,
-                desc: desc,
-                date: new Date().toISOString()
+        function quickAddExpense(catatan, kategori, nominal) {
+            const transaction = {
+                id: generateId(),
+                tipe: 'expense',
+                kategori: kategori,
+                nominal: nominal,
+                catatan: catatan,
+                tanggal: new Date().toISOString().split('T')[0],
+                timestamp: new Date().getTime()
             };
-            transactions.unshift(newTx);
-            showToast(`Sip! ${desc} (${formatRupiah(amount)}) dicatat.`);
-            updateUI();
+            
+            transactions.push(transaction);
+            saveData();
+            showToast(`${catatan} berhasil dicatat!`);
+            updateDashboard();
         }
 
         function deleteTransaction(id) {
             transactions = transactions.filter(t => t.id !== id);
-            showToast('Data dihapus 🗑️', 'success');
-            updateUI();
+            saveData();
+            showToast('Data berhasil dihapus');
+            updateDashboard();
         }
 
-        function setFilter(type) {
-            currentFilter = type;
-            ['all', 'income', 'expense'].forEach(f => {
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+        }
+
+        function toggleBalance() {
+            balanceHidden = !balanceHidden;
+            const icon = document.getElementById('icon-toggle-balance');
+            if(balanceHidden) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+            updateDashboard();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Update Active Button styling
+            ['this_month', 'last_month', 'all_time'].forEach(f => {
                 const btn = document.getElementById(`btn-filter-${f}`);
-                if (f === type) {
-                    btn.className = 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all bg-white/10 text-white shadow-sm';
+                if (f === filter) {
+                    btn.className = "filter-btn snap-start px-5 py-2.5 md:py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold text-xs md:text-sm whitespace-nowrap shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all transform active:scale-95 flex items-center gap-2";
                 } else {
-                    btn.className = 'px-5 py-2.5 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5';
+                    btn.className = "filter-btn snap-start px-5 py-2.5 md:py-3 rounded-2xl bg-white/5 text-slate-400 border border-white/5 font-bold text-xs md:text-sm whitespace-nowrap hover:bg-white/10 hover:text-white transition-all transform active:scale-95 flex items-center gap-2";
                 }
             });
-            renderList();
+            
+            updateDashboard();
         }
 
-        function renderList() {
-            const container = document.getElementById('tx-list');
-            let filtered = transactions;
+        function getFilteredTransactions() {
+            if (currentFilter === 'all_time') return transactions;
             
-            if (currentFilter !== 'all') {
-                filtered = filtered.filter(t => t.type === currentFilter);
-            }
-            if (searchQuery) {
-                filtered = filtered.filter(t => 
-                    t.desc.toLowerCase().includes(searchQuery) || 
-                    t.category.toLowerCase().includes(searchQuery)
-                );
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            return transactions.filter(t => {
+                const date = new Date(t.tanggal);
+                if (currentFilter === 'this_month') {
+                    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+                } else if (currentFilter === 'last_month') {
+                    let lastMonth = currentMonth - 1;
+                    let year = currentYear;
+                    if (lastMonth < 0) {
+                        lastMonth = 11;
+                        year--;
+                    }
+                    return date.getMonth() === lastMonth && date.getFullYear() === year;
+                }
+                return true;
+            });
+        }
+
+        function updateDashboard() {
+            const filteredTx = getFilteredTransactions();
+            
+            let totalIncome = 0;
+            let totalExpense = 0;
+            
+            filteredTx.forEach(t => {
+                if(t.tipe === 'income') totalIncome += t.nominal;
+                if(t.tipe === 'expense') totalExpense += t.nominal;
+            });
+            
+            const balance = totalIncome - totalExpense;
+            
+            // Update Text
+            document.getElementById('saldo-utama').innerText = formatRupiah(balance);
+            document.getElementById('total-masuk').innerText = formatRupiah(totalIncome);
+            document.getElementById('total-keluar').innerText = formatRupiah(totalExpense);
+            
+            // Update Badge
+            const badge = document.getElementById('status-badge');
+            if (balance > 0) {
+                badge.innerText = "STATUS AMAN 🛡️";
+                badge.className = "bg-blue-500/20 text-blue-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-blue-500/30 tracking-wider";
+            } else if (balance < 0) {
+                badge.innerText = "MINUS BOS 💀";
+                badge.className = "bg-rose-500/20 text-rose-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-rose-500/30 tracking-wider";
+            } else {
+                badge.innerText = "KOSONG 💸";
+                badge.className = "bg-slate-500/20 text-slate-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-slate-500/30 tracking-wider";
             }
 
-            document.getElementById('tx-count').innerText = `${filtered.length} Data Ditemukan`;
+            renderBudget(totalExpense);
+            renderGoals();
+            renderHistory(filteredTx);
+            renderChart(filteredTx);
+        }
 
-            if (filtered.length === 0) {
+        // --- NEW FEATURE LOGIC: BATAS BONCOS (BUDGET) ---
+        function renderBudget(currentExpense) {
+            const container = document.getElementById('budget-content');
+            
+            if (budgetLimit <= 0) {
                 container.innerHTML = `
-                    <div class="text-center py-16 opacity-50 flex flex-col items-center">
-                        <div class="w-24 h-24 rounded-full bg-slate-800/50 flex items-center justify-center mb-6">
-                            <i class="fas fa-ghost text-5xl text-slate-500"></i>
-                        </div>
-                        <p class="text-base text-slate-400 font-bold">Sepi nih, belum ada transaksi.</p>
-                        <p class="text-sm text-slate-500 mt-2">Mulai catat pengeluaran pertamamu!</p>
+                    <div class="text-center py-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                        <i class="fas fa-wallet text-3xl text-slate-500 mb-3 block"></i>
+                        <p class="text-sm text-slate-400 mb-4">Kamu belum set batas pengeluaran bulanan.</p>
+                        <button onclick="openBudgetModal()" class="px-5 py-2.5 rounded-xl bg-rose-500/20 text-rose-400 font-bold text-xs hover:bg-rose-500 hover:text-white transition-all shadow-[0_0_15px_rgba(244,63,94,0.2)]">Set Batas Boncos</button>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = filtered.map(t => {
-                const isIncome = t.type === 'income';
-                const iconClass = isIncome ? 'fa-arrow-down text-emerald-400' : 'fa-arrow-up text-rose-400';
-                const bgIcon = isIncome ? 'bg-emerald-500/15' : 'bg-rose-500/15';
-                const shadowIcon = isIncome ? 'shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'shadow-[0_0_15px_rgba(244,63,94,0.3)]';
-                const textColor = isIncome ? 'text-emerald-400' : 'text-rose-400';
-                const sign = isIncome ? '+' : '-';
-                
-                const txDate = new Date(t.date);
-                const today = new Date();
-                let dateStr = txDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-                if (txDate.toDateString() === today.toDateString()) dateStr = 'Hari ini';
-                else {
-                    const yesterday = new Date(today);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    if (txDate.toDateString() === yesterday.toDateString()) dateStr = 'Kemarin';
-                }
+            // Dynamic Pacing Logic (Phase 2 Spec)
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const daysLeft = daysInMonth - now.getDate() + 1;
+            const remainingBudget = Math.max(0, budgetLimit - currentExpense);
+            const dailySafeLimit = remainingBudget / daysLeft;
 
-                return `
-                    <div class="group flex items-center justify-between p-5 bg-slate-900/60 hover:bg-slate-800/90 rounded-[1.5rem] border border-white/5 transition-all hover:scale-[1.01] hover:shadow-xl">
-                        <div class="flex items-center gap-5 w-[70%]">
-                            <div class="w-14 h-14 rounded-2xl ${bgIcon} flex items-center justify-center flex-shrink-0 ${shadowIcon}">
-                                <i class="fas ${iconClass} text-xl"></i>
-                            </div>
-                            <div class="overflow-hidden">
-                                <h4 class="text-base lg:text-lg font-bold text-slate-100 truncate mb-1">${escapeHtml(t.desc)}</h4>
-                                <div class="flex items-center gap-2 text-xs lg:text-sm">
-                                    <span class="text-slate-400 font-semibold truncate">${t.category}</span>
-                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
-                                    <span class="text-slate-500 font-medium">${dateStr}</span>
+            let percentage = (currentExpense / budgetLimit) * 100;
+            if (percentage > 100) percentage = 100;
+            
+            let barColor = 'bg-emerald-400';
+            let shadowColor = 'rgba(52, 211, 153, 0.4)';
+            let statusText = 'Masih Aman 👍';
+            let textColor = 'text-emerald-400';
+            
+            if (percentage > 75) {
+                barColor = 'bg-amber-400';
+                shadowColor = 'rgba(251, 191, 36, 0.4)';
+                statusText = 'Awas Jebol! ⚠️';
+                textColor = 'text-amber-400';
+            }
+            if (percentage >= 100) {
+                barColor = 'bg-rose-500';
+                shadowColor = 'rgba(244, 63, 94, 0.5)';
+                statusText = 'OVER BUDGET 💀';
+                textColor = 'text-rose-500';
+            }
+
+            container.innerHTML = `
+                <div class="flex justify-between items-end mb-2">
+                    <p class="text-xl font-extrabold text-white">${formatRupiah(currentExpense)}</p>
+                    <p class="text-xs font-medium text-slate-400">dari ${formatRupiah(budgetLimit)}</p>
+                </div>
+                <div class="w-full h-4 bg-slate-900 rounded-full overflow-hidden border border-white/5 shadow-inner relative mb-4">
+                    <div class="h-full rounded-full ${barColor} progress-bar-fill" style="width: ${percentage}%; box-shadow: 0 0 10px ${shadowColor};"></div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                    <div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</p>
+                        <p class="text-xs font-bold ${textColor}">${statusText} (${percentage.toFixed(0)}%)</p>
+                    </div>
+                    <div class="text-right border-l border-white/10 pl-3">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jatah Harian Sisa</p>
+                        <p class="text-xs font-bold text-blue-400">${formatRupiah(dailySafeLimit)}/hari</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- NEW FEATURE LOGIC: GAMIFICATION & AI INSIGHTS ---
+        function calculateStreak() {
+            const streakBadge = document.getElementById('streak-badge');
+            const streakCount = document.getElementById('streak-count');
+            
+            // Get dates of all expenses
+            const expenseDates = [...new Set(transactions.filter(t => t.tipe === 'expense').map(t => t.tanggal))].sort().reverse();
+            
+            if (expenseDates.length === 0) {
+                streakBadge.classList.add('hidden');
+                return;
+            }
+
+            let streak = 0;
+            let checkDate = new Date();
+            const todayStr = checkDate.toISOString().split('T')[0];
+            
+            // If expense today, streak resets
+            if (expenseDates.includes(todayStr)) {
+                streakBadge.classList.add('hidden');
+                return;
+            }
+
+            // Count backwards
+            while (true) {
+                const dateStr = checkDate.toISOString().split('T')[0];
+                if (!expenseDates.includes(dateStr)) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            if (streak > 0) {
+                streakCount.innerText = streak;
+                streakBadge.classList.remove('hidden');
+            } else {
+                streakBadge.classList.add('hidden');
+            }
+        }
+
+        function generateAIInsight(currentExpense) {
+            const aiText = document.getElementById('ai-insight-text');
+            const expenses = transactions.filter(t => t.tipe === 'expense');
+            
+            if (expenses.length === 0) {
+                aiText.innerText = `"Hmm, belum ada pengeluaran yang kucatat. Yuk, mulai tracking supaya dompetmu aman terkendali!"`;
+                return;
+            }
+
+            // Simple predictive logic based on Phase 3 Spec
+            if (budgetLimit > 0) {
+                const percentage = (currentExpense / budgetLimit) * 100;
+                const now = new Date();
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                const progressMonth = (now.getDate() / daysInMonth) * 100;
+
+                if (percentage >= 100) {
+                    aiText.innerHTML = `<span class="text-rose-400">"Waduh! Pengeluaranmu udah ngelewatin batas bulan ini. Rem pengeluaran non-esensial sekarang juga ya!"</span>`;
+                } else if (percentage > progressMonth + 15) {
+                    aiText.innerHTML = `"Kecepatan belanjamu <span class="text-amber-400 font-bold">terlalu tinggi</span> dibanding sisa hari. Kurangi jajan di luar biar nggak bokek akhir bulan."`;
+                } else if (percentage < progressMonth - 10) {
+                    aiText.innerHTML = `"Keren! Pola pengeluaranmu <span class="text-emerald-400 font-bold">sangat sehat</span>. Kamu bisa alokasikan sisa uangmu ke tabungan impian."`;
+                } else {
+                    // Category insight
+                    const categoryData = {};
+                    expenses.forEach(t => categoryData[t.kategori] = (categoryData[t.kategori] || 0) + t.nominal);
+                    const topCategory = Object.keys(categoryData).reduce((a, b) => categoryData[a] > categoryData[b] ? a : b);
+                    aiText.innerHTML = `"Pengeluaranmu cukup stabil. Aku perhatikan pengeluaran terbesarmu ada di <span class="text-purple-300 font-bold">${topCategory}</span>. Coba hemat dikit di sana ya!"`;
+                }
+            } else {
+                aiText.innerText = `"Aku saranin kamu set Batas Boncos (Budget) dulu di bawah, biar aku bisa ngasih analisa yang lebih tajam!"`;
+            }
+        }
+
+        // --- NEW FEATURE LOGIC: TARGET IMPIAN (GOALS) ---
+        function updateDashboard() {
+            const filteredTx = getFilteredTransactions();
+            
+            let totalIncome = 0;
+            let totalExpense = 0;
+            
+            filteredTx.forEach(t => {
+                if(t.tipe === 'income') totalIncome += t.nominal;
+                if(t.tipe === 'expense') totalExpense += t.nominal;
+            });
+            
+            const balance = totalIncome - totalExpense;
+            
+            // Update Text
+            document.getElementById('saldo-utama').innerText = formatRupiah(balance);
+            document.getElementById('total-masuk').innerText = formatRupiah(totalIncome);
+            document.getElementById('total-keluar').innerText = formatRupiah(totalExpense);
+            
+            // Update Badge
+            const badge = document.getElementById('status-badge');
+            if (balance > 0) {
+                badge.innerText = "STATUS AMAN 🛡️";
+                badge.className = "bg-blue-500/20 text-blue-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-blue-500/30 tracking-wider";
+            } else if (balance < 0) {
+                badge.innerText = "MINUS BOS 💀";
+                badge.className = "bg-rose-500/20 text-rose-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-rose-500/30 tracking-wider";
+            } else {
+                badge.innerText = "KOSONG 💸";
+                badge.className = "bg-slate-500/20 text-slate-300 text-[10px] font-extrabold px-3 py-1 rounded-lg border border-slate-500/30 tracking-wider";
+            }
+
+            renderBudget(totalExpense);
+            calculateStreak(); // New gamification logic
+            generateAIInsight(totalExpense); // New AI logic
+            
+            renderGoals();
+            renderHistory(filteredTx);
+            renderChart(filteredTx);
+        }
+
+            savingGoals.forEach(goal => {
+                let percentage = (goal.current / goal.target) * 100;
+                if (percentage > 100) percentage = 100;
+                const isComplete = percentage >= 100;
+                
+                const card = document.createElement('div');
+                card.className = "bg-slate-800/40 p-4 lg:p-5 rounded-2xl border border-white/5 hover:border-pink-500/30 transition-all group flex flex-col justify-between";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${isComplete ? 'from-emerald-400 to-emerald-600' : 'from-slate-700 to-slate-800'} flex items-center justify-center text-xl shadow-lg border border-white/10 relative">
+                                    ${goal.icon}
+                                    ${isComplete ? '<div class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center border-2 border-slate-900"><i class="fas fa-check text-[8px] text-white"></i></div>' : ''}
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white truncate max-w-[120px]" title="${goal.name}">${goal.name}</h4>
+                                    <p class="text-[10px] text-slate-400 font-medium">Target: ${formatRupiah(goal.target)}</p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <span class="font-black ${textColor} text-base lg:text-lg whitespace-nowrap drop-shadow-sm">${sign}${formatRupiah(t.amount)}</span>
-                            <button onclick="deleteTransaction('${t.id}')" class="w-9 h-9 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 -mr-2">
-                                <i class="fas fa-trash-alt text-sm"></i>
+                            <button onclick="confirmDeleteGoal('${goal.id}')" class="text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100">
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
+                        
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5 mt-4">
+                            <div class="h-full rounded-full ${isComplete ? 'bg-emerald-400' : 'bg-pink-500'} progress-bar-fill shadow-[0_0_10px_rgba(236,72,153,0.3)]" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-[10px] font-bold ${isComplete ? 'text-emerald-400' : 'text-slate-300'}">${formatRupiah(goal.current)}</p>
+                            <p class="text-[10px] font-bold ${isComplete ? 'text-emerald-400' : 'text-pink-400'}">${percentage.toFixed(0)}%</p>
+                        </div>
                     </div>
+                    
+                    <button onclick="openAddFundsModal('${goal.id}')" ${isComplete ? 'disabled' : ''} class="w-full mt-4 py-2.5 rounded-xl ${isComplete ? 'bg-emerald-500/20 text-emerald-400 cursor-not-allowed' : 'bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 border border-pink-500/20 hover:border-pink-500/40'} font-bold text-xs transition-all flex items-center justify-center gap-2">
+                        ${isComplete ? '<i class="fas fa-check-circle"></i> Target Tercapai!' : '<i class="fas fa-plus"></i> Isi Tabungan'}
+                    </button>
                 `;
-            }).join('');
+                container.appendChild(card);
+            });
         }
 
-        function renderCategoryBreakdown() {
-            const container = document.getElementById('category-breakdown-list');
-            const chartCanvas = document.getElementById('expenseChart');
-            const emptyState = document.getElementById('chart-empty-state');
-            if (!container || !chartCanvas) return;
+        // --- MODAL HANDLERS ---
+        let currentInputCallback = null;
 
-            const thisMonth = new Date().getMonth();
-            const thisYear = new Date().getFullYear();
+        function openBudgetModal() {
+            document.getElementById('input-modal-title').innerText = "Batas Boncos";
+            document.getElementById('input-modal-message').innerText = "Atur maksimal pengeluaran bulan ini agar tidak jebol.";
+            document.getElementById('input-modal-icon').innerHTML = '<i class="fas fa-shield-alt"></i>';
+            document.getElementById('input-modal-icon').className = "w-16 h-16 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-rose-500/30";
+            
+            const inputField = document.getElementById('modal-input-value');
+            inputField.value = budgetLimit > 0 ? budgetLimit : '';
+            
+            const saveBtn = document.getElementById('input-modal-save-btn');
+            saveBtn.className = "flex-1 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors shadow-[0_0_15px_rgba(244,63,94,0.4)]";
+            
+            currentInputCallback = (val) => {
+                budgetLimit = val;
+                localStorage.setItem(BUDGET_KEY, budgetLimit);
+                showToast("Batas boncos berhasil diatur!");
+                updateDashboard();
+            };
+            
+            showInputModal();
+        }
 
-            const expenseTxs = transactions.filter(t => {
-                const txDate = new Date(t.date);
-                return t.type === 'expense' && txDate.getMonth() === thisMonth && txDate.getFullYear() === thisYear;
-            });
+        function openAddFundsModal(goalId) {
+            const goal = savingGoals.find(g => g.id === goalId);
+            if(!goal) return;
 
-            const totalExpense = expenseTxs.reduce((acc, t) => acc + t.amount, 0);
+            document.getElementById('input-modal-title').innerText = "Isi Tabungan";
+            document.getElementById('input-modal-message').innerText = `Nabung untuk ${goal.name}. Uang ini akan dicatat sebagai pengeluaran di buku utamamu.`;
+            document.getElementById('input-modal-icon').innerHTML = '<i class="fas fa-piggy-bank"></i>';
+            document.getElementById('input-modal-icon').className = "w-16 h-16 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-pink-500/30";
+            
+            const inputField = document.getElementById('modal-input-value');
+            inputField.value = '';
+            
+            const saveBtn = document.getElementById('input-modal-save-btn');
+            saveBtn.className = "flex-1 py-3 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold transition-colors shadow-[0_0_15px_rgba(236,72,153,0.4)]";
+            
+            currentInputCallback = (val) => {
+                // 1. Add to goal
+                goal.current += val;
+                localStorage.setItem(GOALS_KEY, JSON.stringify(savingGoals));
+                
+                // 2. Add as transaction
+                const transaction = {
+                    id: generateId(),
+                    tipe: 'expense',
+                    kategori: 'Investasi/Tabungan',
+                    nominal: val,
+                    catatan: `Nabung: ${goal.name}`,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    timestamp: new Date().getTime()
+                };
+                transactions.push(transaction);
+                saveData();
+                
+                showToast(`Yey! Berhasil nabung untuk ${goal.name}`);
+                updateDashboard();
+            };
+            
+            showInputModal();
+        }
 
-            if (totalExpense === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-10 italic font-medium">Bulan ini belum ada pengeluaran.</p>`;
-                chartCanvas.style.display = 'none';
-                emptyState.classList.remove('hidden');
-                if (expenseChartInstance) {
-                    expenseChartInstance.destroy();
-                    expenseChartInstance = null;
+        function showInputModal() {
+            const modal = document.getElementById('input-modal');
+            const content = document.getElementById('input-modal-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+                document.getElementById('modal-input-value').focus();
+            }, 10);
+            
+            // Attach specific save handler to button
+            document.getElementById('input-modal-save-btn').onclick = () => {
+                const val = parseFloat(document.getElementById('modal-input-value').value);
+                if (isNaN(val) || val < 0) {
+                    showToast('Masukkan nominal yang valid!', 'error');
+                    return;
                 }
+                if(currentInputCallback) currentInputCallback(val);
+                closeInputModal();
+            };
+        }
+
+        function closeInputModal() {
+            const modal = document.getElementById('input-modal');
+            const content = document.getElementById('input-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                currentInputCallback = null;
+            }, 300);
+        }
+
+        // Goal creation
+        function openGoalModal() {
+            const modal = document.getElementById('goal-modal');
+            const content = document.getElementById('goal-modal-content');
+            document.getElementById('goal-input-name').value = '';
+            document.getElementById('goal-input-target').value = '';
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeGoalModal() {
+            const modal = document.getElementById('goal-modal');
+            const content = document.getElementById('goal-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+
+        function saveNewGoal() {
+            const name = document.getElementById('goal-input-name').value.trim();
+            const target = parseFloat(document.getElementById('goal-input-target').value);
+            const icon = document.querySelector('input[name="goal-icon"]:checked').value;
+
+            if (!name) { showToast('Nama impian harus diisi!', 'error'); return; }
+            if (isNaN(target) || target <= 0) { showToast('Target nominal tidak valid!', 'error'); return; }
+
+            const newGoal = {
+                id: 'goal_' + generateId(),
+                name: name,
+                target: target,
+                current: 0,
+                icon: icon,
+                timestamp: new Date().getTime()
+            };
+
+            savingGoals.push(newGoal);
+            localStorage.setItem(GOALS_KEY, JSON.stringify(savingGoals));
+            closeGoalModal();
+            showToast('Target impian berhasil dibuat!');
+            renderGoals();
+        }
+
+        function confirmDeleteGoal(id) {
+            showModal(
+                "Hapus Target Impian?",
+                "Progress tabungan ini akan dihapus dari daftar impian, namun history uang yang sudah ditabung tidak akan hilang dari buku utama.",
+                () => {
+                    savingGoals = savingGoals.filter(g => g.id !== id);
+                    localStorage.setItem(GOALS_KEY, JSON.stringify(savingGoals));
+                    showToast('Target impian dihapus.');
+                    renderGoals();
+                }
+            );
+        }
+
+
+        function renderHistory(dataToRender) {
+            const container = document.getElementById('history-container');
+            container.innerHTML = '';
+            
+            const txs = dataToRender || getFilteredTransactions();
+            
+            if(txs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 opacity-50">
+                        <i class="fas fa-ghost text-4xl text-slate-500 mb-3"></i>
+                        <p class="text-sm font-bold text-slate-400">Belum ada history.</p>
+                    </div>`;
                 return;
             }
 
-            chartCanvas.style.display = 'block';
-            emptyState.classList.add('hidden');
+            // Sort by date desc
+            const sorted = [...txs].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal) || b.timestamp - a.timestamp);
+            
+            sorted.forEach(t => {
+                const isIncome = t.tipe === 'income';
+                const sign = isIncome ? '+' : '-';
+                const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
+                const bgIconClass = isIncome ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400';
+                
+                // Find icon
+                let catObj = categories[t.tipe].find(c => c.id === t.kategori);
+                let icon = catObj ? catObj.icon : (isIncome ? '💰' : '💸');
 
-            const catMap = {};
-            expenseTxs.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+                const dateStr = new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-            const sortedCats = Object.keys(catMap)
-                .map(cat => ({ category: cat, amount: catMap[cat] }))
-                .sort((a, b) => b.amount - a.amount);
-
-            const tailwindGradients = ['from-pink-500 to-rose-500', 'from-purple-500 to-indigo-500', 'from-cyan-400 to-blue-500', 'from-amber-400 to-orange-500', 'from-emerald-400 to-teal-500'];
-            const hexColors = ['#ec4899', '#a855f7', '#22d3ee', '#fbbf24', '#34d399'];
-
-            container.innerHTML = sortedCats.map((item, idx) => {
-                const percent = Math.round((item.amount / totalExpense) * 100);
-                const colorClass = tailwindGradients[idx % tailwindGradients.length];
-
-                return `
-                    <div class="space-y-3 p-4 bg-slate-900/40 rounded-2xl border border-white/5 hover:bg-slate-800/60 transition-colors">
-                        <div class="flex justify-between items-end">
-                            <div class="overflow-hidden pr-3">
-                                <span class="font-bold text-slate-200 text-sm lg:text-base block truncate">${escapeHtml(item.category)}</span>
-                                <span class="text-xs font-semibold text-slate-500 mt-0.5 block">${formatRupiah(item.amount)}</span>
-                            </div>
-                            <span class="text-lg font-black text-white drop-shadow-md flex-shrink-0">${percent}%</span>
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group";
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl ${bgIconClass} flex items-center justify-center text-2xl shadow-inner">
+                            ${icon}
                         </div>
-                        <div class="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-white/5">
-                            <div class="bg-gradient-to-r ${colorClass} h-full rounded-full transition-all duration-1000 ease-out relative" style="width: ${percent}%">
-                                <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/40 blur-[2px] rounded-r-full"></div>
-                            </div>
+                        <div>
+                            <h4 class="font-bold text-white text-sm lg:text-base capitalize">${t.catatan}</h4>
+                            <p class="text-xs text-slate-400 font-medium">${t.kategori} • ${dateStr}</p>
                         </div>
                     </div>
+                    <div class="flex items-center gap-4">
+                        <span class="font-extrabold ${colorClass} text-sm lg:text-base whitespace-nowrap">
+                            ${sign} ${balanceHidden ? '***' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(t.nominal)}
+                        </span>
+                        <button onclick="deleteTransaction('${t.id}')" class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white" title="Hapus">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
                 `;
-            }).join('');
+                container.appendChild(item);
+            });
+        }
 
-            const chartLabels = sortedCats.map(c => c.category);
-            const chartDataValues = sortedCats.map(c => c.amount);
-            const chartBgColors = sortedCats.map((_, i) => hexColors[i % hexColors.length]);
+        function renderChart(filteredTx) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const emptyState = document.getElementById('empty-chart-state');
+            const canvas = document.getElementById('expenseChart');
+            
+            // Only aggregate expenses for the Doughnut chart
+            const expenses = filteredTx.filter(t => t.tipe === 'expense');
+            
+            if (expenses.length === 0) {
+                if(expenseChartInstance) expenseChartInstance.destroy();
+                canvas.style.display = 'none';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                canvas.style.display = 'block';
+                emptyState.classList.add('hidden');
+            }
+
+            const categoryData = {};
+            expenses.forEach(t => {
+                categoryData[t.kategori] = (categoryData[t.kategori] || 0) + t.nominal;
+            });
+
+            const labels = Object.keys(categoryData);
+            const data = Object.values(categoryData);
 
             if (expenseChartInstance) {
-                expenseChartInstance.data.labels = chartLabels;
-                expenseChartInstance.data.datasets[0].data = chartDataValues;
-                expenseChartInstance.data.datasets[0].backgroundColor = chartBgColors;
-                expenseChartInstance.update();
-            } else {
-                Chart.defaults.color = '#94a3b8';
-                Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-                
-                expenseChartInstance = new Chart(chartCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: chartLabels,
-                        datasets: [{
-                            data: chartDataValues,
-                            backgroundColor: chartBgColors,
-                            borderWidth: 2,
-                            borderColor: '#0f172a',
-                            hoverOffset: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '75%', 
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleColor: '#fff',
-                                bodyColor: '#e2e8f0',
-                                borderColor: 'rgba(168, 85, 247, 0.3)',
-                                borderWidth: 1,
-                                padding: 16,
-                                cornerRadius: 16,
-                                titleFont: { size: 14, weight: 'bold' },
-                                bodyFont: { size: 14, weight: 'bold' },
-                                callbacks: {
-                                    label: function(context) { return ' ' + formatRupiah(context.parsed); }
+                expenseChartInstance.destroy();
+            }
+
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: chartColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { size: 12, weight: 'bold' },
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 14, weight: 'bold' },
+                            padding: 15,
+                            cornerRadius: 12,
+                            borderColor: 'rgba(168, 85, 247, 0.3)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed);
+                                    }
+                                    return label;
                                 }
                             }
                         }
                     }
-                });
-            }
-        }
-
-        function renderWidgets() {
-            document.getElementById('target-name').innerText = savingsState.name;
-            document.getElementById('target-saved').innerText = formatRupiah(savingsState.saved);
-            document.getElementById('target-total').innerText = formatRupiah(savingsState.target);
-            
-            let percent = (savingsState.saved / savingsState.target) * 100;
-            if (percent > 100) percent = 100;
-            
-            document.getElementById('target-percent').innerText = `${Math.floor(percent)}%`;
-            setTimeout(() => { document.getElementById('target-bar').style.width = `${percent}%`; }, 100);
-
-            const thisMonth = new Date().getMonth();
-            const thisYear = new Date().getFullYear();
-            const currentMonthExpense = transactions.filter(t => {
-                const txDate = new Date(t.date);
-                return t.type === 'expense' && txDate.getMonth() === thisMonth && txDate.getFullYear() === thisYear;
-            }).reduce((acc, t) => acc + t.amount, 0);
-
-            document.getElementById('limit-used').innerText = formatRupiah(currentMonthExpense);
-            document.getElementById('limit-total').innerText = formatRupiah(limitState.limit);
-            
-            let limitPercent = (currentMonthExpense / limitState.limit) * 100;
-            const limitBar = document.getElementById('limit-bar');
-            const badge = document.getElementById('limit-status-badge');
-            
-            if (limitPercent > 100) limitPercent = 100;
-            setTimeout(() => { limitBar.style.width = `${limitPercent}%`; }, 100);
-
-            if (currentMonthExpense > limitState.limit) {
-                limitBar.className = 'bg-rose-500 h-full rounded-full transition-all duration-500 progress-stripe shadow-[0_0_20px_rgba(244,63,94,0.8)] relative';
-                badge.className = 'text-xs font-black tracking-widest px-3 py-1.5 rounded-lg border border-rose-500/80 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.6)] bg-rose-900/50 uppercase animate-pulse';
-                badge.innerText = 'OVER LIMIT 🚨';
-            } else if (currentMonthExpense > limitState.limit * 0.8) {
-                limitBar.className = 'bg-amber-400 h-full rounded-full transition-all duration-500 progress-stripe shadow-[0_0_20px_rgba(251,191,36,0.6)] relative';
-                badge.className = 'text-xs font-black tracking-widest px-3 py-1.5 rounded-lg border border-amber-500/50 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)] bg-amber-900/30 uppercase';
-                badge.innerText = 'WARNING [80%]';
-            } else {
-                limitBar.className = 'bg-emerald-400 h-full rounded-full transition-all duration-500 progress-stripe shadow-[0_0_20px_rgba(16,185,129,0.6)] relative';
-                badge.className = 'text-xs font-black tracking-widest px-3 py-1.5 rounded-lg border border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] bg-emerald-900/30 uppercase';
-                badge.innerText = 'SISTEM AMAN 😎';
-            }
-            limitBar.innerHTML = '<div class="absolute right-0 top-0 bottom-0 w-4 bg-white/50 blur-sm rounded-r-full"></div>';
-        }
-
-        function addSavings(amount) {
-            if (savingsState.saved >= savingsState.target) {
-                showToast('Target sudah tercapai bro! 🎉', 'success');
-                return;
-            }
-            savingsState.saved += amount;
-            showToast(`Nabung ${formatRupiah(amount)} semangat! 💪`);
-            updateUI();
-        }
-        function editTarget() {
-            const name = prompt("Nama Target Impian:", savingsState.name);
-            if (name === null) return;
-            const target = prompt("Nominal Target (Rp):", savingsState.target);
-            if (target === null || isNaN(target) || target <= 0) return;
-            
-            savingsState.name = name;
-            savingsState.target = parseFloat(target);
-            savingsState.saved = 0; 
-            updateUI();
-        }
-        function editLimit() {
-            const newLimit = prompt("Setel Batas Boncos per Bulan (Rp):", limitState.limit);
-            if (newLimit === null || isNaN(newLimit) || newLimit <= 0) return;
-            limitState.limit = parseFloat(newLimit);
-            updateUI();
-        }
-
-        function renderSubscriptions() {
-            const container = document.getElementById('subscriptions-list');
-            const totalText = document.getElementById('sub-total-text');
-            const total = subscriptions.reduce((acc, s) => acc + s.amount, 0);
-            totalText.innerText = formatRupiah(total);
-
-            if (subscriptions.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8 italic font-medium">Belum ada tagihan rutin.</p>`;
-                return;
-            }
-
-            container.innerHTML = subscriptions.map(s => {
-                const statusBadge = s.paid 
-                    ? `<span class="text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">LUNAS</span>`
-                    : `<span class="text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]">BELUM</span>`;
-
-                return `
-                    <div class="bg-slate-900/60 p-4 lg:p-5 rounded-2xl border border-white/5 flex items-center justify-between group transition-all hover:bg-slate-800/90 hover:shadow-lg">
-                        <div class="flex items-center gap-4">
-                            <button onclick="toggleSubPaid('${s.id}')" title="Tandai lunas bulan ini" class="text-xl lg:text-2xl transition-transform active:scale-75">
-                                ${s.paid ? '<i class="fas fa-check-circle text-emerald-400 shadow-sm drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"></i>' : '<i class="far fa-circle text-slate-500 hover:text-indigo-400 transition-colors"></i>'}
-                            </button>
-                            <div class="overflow-hidden">
-                                <h4 class="text-sm lg:text-base font-bold truncate w-32 sm:w-48 lg:w-48 ${s.paid ? 'line-through text-slate-500' : 'text-white'}">${escapeHtml(s.title)}</h4>
-                                <p class="text-xs lg:text-sm text-indigo-300 font-bold mt-0.5">${formatRupiah(s.amount)}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            ${statusBadge}
-                            <button onclick="deleteSub('${s.id}')" class="w-8 h-8 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                                <i class="fas fa-trash-alt text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function openSubModal() {
-            document.getElementById('sub-title-input').value = '';
-            document.getElementById('sub-amount-input').value = '';
-            const modal = document.getElementById('sub-modal');
-            const content = document.getElementById('sub-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95');
-            }, 10);
-        }
-        function closeSubModal() {
-            const modal = document.getElementById('sub-modal');
-            const content = document.getElementById('sub-modal-content');
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-        function saveSubModal() {
-            const title = document.getElementById('sub-title-input').value.trim();
-            const amount = parseFloat(document.getElementById('sub-amount-input').value);
-            if (!title || isNaN(amount) || amount <= 0) {
-                showToast('Isi data tagihan dengan benar!', 'error');
-                return;
-            }
-            subscriptions.push({ id: 'sub_' + Date.now(), title, amount, paid: false });
-            closeSubModal();
-            showToast('Tagihan rutin ditambahkan!');
-            updateUI();
-        }
-        function toggleSubPaid(id) {
-            const sub = subscriptions.find(s => s.id === id);
-            if (sub) {
-                sub.paid = !sub.paid;
-                updateUI();
-            }
-        }
-        function deleteSub(id) {
-            subscriptions = subscriptions.filter(s => s.id !== id);
-            updateUI();
-        }
-
-        function renderDebts() {
-            const container = document.getElementById('debt-list');
-
-            if (debts.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8 italic font-medium">Alhamdulillah, bersih dari hutang.</p>`;
-                return;
-            }
-
-            container.innerHTML = debts.map(d => {
-                const isOwe = d.type === 'owe'; 
-                const badgeColor = isOwe ? 'rose' : 'emerald';
-                const badgeText = isOwe ? 'Hutangku' : 'Piutangku';
-                
-                const statusBadge = d.paid 
-                    ? `<span class="text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg bg-slate-500/20 text-slate-400 border border-slate-500/30">LUNAS</span>`
-                    : `<span class="text-[10px] font-black tracking-widest px-3 py-1.5 rounded-lg bg-${badgeColor}-500/20 text-${badgeColor}-400 border border-${badgeColor}-500/30 shadow-[0_0_10px_rgba(0,0,0,0.2)]">${badgeText}</span>`;
-
-                return `
-                    <div class="bg-slate-900/60 p-4 lg:p-5 rounded-2xl border border-white/5 flex items-center justify-between group transition-all hover:bg-slate-800/90 hover:shadow-lg ${d.paid ? 'opacity-60 grayscale-[50%]' : ''}">
-                        <div class="flex items-center gap-4">
-                            <button onclick="toggleDebtPaid('${d.id}')" title="Tandai Lunas" class="text-xl lg:text-2xl transition-transform active:scale-75">
-                                ${d.paid ? '<i class="fas fa-check-circle text-slate-400"></i>' : '<i class="far fa-circle text-slate-500 hover:text-rose-400 transition-colors"></i>'}
-                            </button>
-                            <div class="overflow-hidden">
-                                <h4 class="text-sm lg:text-base font-bold truncate w-32 sm:w-48 lg:w-48 ${d.paid ? 'line-through text-slate-500' : 'text-white'}">${escapeHtml(d.name)}</h4>
-                                <p class="text-xs lg:text-sm ${isOwe ? 'text-rose-400' : 'text-emerald-400'} font-bold mt-0.5">${formatRupiah(d.amount)}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            ${statusBadge}
-                            <button onclick="deleteDebt('${d.id}')" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-500 text-slate-400 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                                <i class="fas fa-trash-alt text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function selectDebtType(type) {
-            currentDebtType = type;
-            const btnOwe = document.getElementById('btn-debt-type-owe');
-            const btnOwed = document.getElementById('btn-debt-type-owed');
-
-            if (type === 'owe') {
-                btnOwe.className = 'py-3.5 rounded-xl text-sm font-bold transition-all bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]';
-                btnOwed.className = 'py-3.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5';
-            } else {
-                btnOwed.className = 'py-3.5 rounded-xl text-sm font-bold transition-all bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]';
-                btnOwe.className = 'py-3.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white hover:bg-white/5';
-            }
-        }
-        function openDebtModal() {
-            document.getElementById('debt-name-input').value = '';
-            document.getElementById('debt-amount-input').value = '';
-            selectDebtType('owe'); 
-            
-            const modal = document.getElementById('debt-modal');
-            const content = document.getElementById('debt-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95');
-            }, 10);
-        }
-        function closeDebtModal() {
-            const modal = document.getElementById('debt-modal');
-            const content = document.getElementById('debt-modal-content');
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-        function saveDebtModal() {
-            const name = document.getElementById('debt-name-input').value.trim();
-            const amount = parseFloat(document.getElementById('debt-amount-input').value);
-            if (!name || isNaN(amount) || amount <= 0) {
-                showToast('Data belum lengkap bro!', 'error');
-                return;
-            }
-            debts.unshift({ id: 'debt_' + Date.now(), type: currentDebtType, name, amount, paid: false });
-            closeDebtModal();
-            showToast('Catatan disimpan! 🤝');
-            updateUI();
-        }
-        function toggleDebtPaid(id) {
-            const debt = debts.find(d => d.id === id);
-            if (debt) {
-                debt.paid = !debt.paid;
-                if(debt.paid) showToast('Yay! Lunas! 🎉');
-                updateUI();
-            }
-        }
-        function deleteDebt(id) {
-            debts = debts.filter(d => d.id !== id);
-            updateUI();
+                }
+            });
         }
 
         function exportToCSV() {
             if (transactions.length === 0) {
-                showToast('Belum ada data untuk di-export.', 'error');
+                showToast('Tidak ada data untuk diexport', 'info');
                 return;
             }
+
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Tanggal,Tipe,Kategori,Nominal,Keterangan\n";
-            transactions.forEach(row => {
-                const date = new Date(row.date).toLocaleDateString('id-ID');
-                const type = row.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
-                const desc = `"${row.desc.replace(/"/g, '""')}"`;
-                csvContent += `${date},${type},${row.category},${row.amount},${desc}\n`;
+            csvContent += "ID,Tipe,Kategori,Nominal,Catatan,Tanggal\n";
+
+            transactions.forEach(t => {
+                let row = `${t.id},${t.tipe},${t.kategori},${t.nominal},"${t.catatan}",${t.tanggal}`;
+                csvContent += row + "\n";
             });
+
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `UANGKU_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `Uangku_Export_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast('File CSV berhasil di-download! 📥');
+            showToast('Data berhasil diexport!');
         }
 
-        function clearAllData() {
-            const confirmed = window.confirm("PERINGATAN: Semua data transaksi, tagihan, dan hutang akan dihapus permanen. Lanjutkan?");
-            if (confirmed) {
-                transactions = [];
-                debts = [];
-                subscriptions = [];
-                savingsState.saved = 0;
-                localStorage.clear();
-                updateUI();
-                showToast('Semua data telah direset.', 'success');
-            }
+        // Custom Modal Logic (Replaces window.confirm)
+        let modalConfirmCallback = null;
+
+        function showModal(title, message, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            modalConfirmCallback = onConfirm;
+            
+            const modal = document.getElementById('confirm-modal');
+            const content = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Animate in
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            document.getElementById('modal-confirm-btn').onclick = () => {
+                if (modalConfirmCallback) modalConfirmCallback();
+                closeModal();
+            };
         }
+
+        function closeModal() {
+            const modal = document.getElementById('confirm-modal');
+            const content = document.getElementById('modal-content');
+            
+            // Animate out
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalConfirmCallback = null;
+            }, 300); // match transition duration
+        }
+
+        function requestClearData() {
+            showModal(
+                "Reset Semua Data",
+                "Apakah kamu yakin ingin menghapus SEMUA data transaksi? Data tidak bisa dikembalikan loh bos.",
+                () => {
+                    transactions = [];
+                    saveData();
+                    updateDashboard();
+                    showToast('Semua data berhasil direset!');
+                }
+            );
+        }
+
     </script>
 </body>
 </html>
